@@ -149,7 +149,9 @@ button {
   background: rgba(255,255,255,0.02);
   border: 1px solid rgba(255,255,255,0.03);
   display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
 }
+.tile:hover { background: rgba(255,255,255,0.05); border-color: var(--cyan-dim); }
 .tile.wall { background: repeating-linear-gradient(45deg, #1a1f3a, #1a1f3a 6px, #151830 6px, #151830 12px); }
 
 .orb {
@@ -240,10 +242,7 @@ button {
   .tile { width: 44px; height: 44px; }
 }
 
-/* ---------- touch controls (mobile) ---------- */
-.touch-controls { display: none; position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); flex-direction: column; align-items: center; gap: 6px; z-index: 5; }
+/* ---------- touch / click controls (always available, not just mobile) ---------- */
+.touch-controls { display: flex; position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); flex-direction: column; align-items: center; gap: 6px; z-index: 5; }
 .touch-row { display: flex; gap: 6px; }
 .touch-btn { width: 52px; height: 52px; font-size: 20px; padding: 0; border-radius: 12px; }
-@media (max-width: 800px) {
-  .touch-controls { display: flex; }
-}

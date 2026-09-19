@@ -3,7 +3,7 @@ import type { RuleEngine } from '../engine/ruleEngine';
 import type { GameObject } from '../engine/types';
 
 /** Renders the current world state. Pure presentational — no game logic here. */
-export function Board({ engine }: { engine: RuleEngine }) {
+export function Board({ engine, onTileClick }: { engine: RuleEngine; onTileClick?: (x: number, y: number) => void }) {
   const { level } = engine;
   const cells: ReactElement[] = [];
 
@@ -41,7 +41,12 @@ export function Board({ engine }: { engine: RuleEngine }) {
       }
 
       cells.push(
-        <div key={`${x},${y}`} className={`tile ${obj?.kind === 'WALL' ? 'wall' : ''}`}>
+        <div
+          key={`${x},${y}`}
+          className={`tile ${obj?.kind === 'WALL' ? 'wall' : ''}`}
+          onClick={onTileClick ? () => onTileClick(x, y) : undefined}
+          role={onTileClick ? 'button' : undefined}
+        >
           {content}
         </div>,
       );

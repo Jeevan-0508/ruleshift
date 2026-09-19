@@ -47,12 +47,25 @@ export function GameScreen() {
 
   if (!engine) return null;
 
+  const handleTileClick = (x: number, y: number) => {
+    const { x: px, y: py } = engine.playerPos;
+    const dx = x - px;
+    const dy = y - py;
+    if (dx === 0 && dy === 0) return;
+    // step one tile toward the clicked tile, biasing the axis with the larger distance
+    if (Math.abs(dx) >= Math.abs(dy)) {
+      move(dx > 0 ? 'RIGHT' : 'LEFT');
+    } else {
+      move(dy > 0 ? 'DOWN' : 'UP');
+    }
+  };
+
   return (
     <div className="game-screen">
       <HUD />
       <div className="game-body">
         <div className="board-wrap">
-          <Board engine={engine} />
+          <Board engine={engine} onTileClick={handleTileClick} />
         </div>
         <ObservationsPanel />
       </div>
