@@ -26,6 +26,9 @@ interface StoreState {
   discoveryQueue: Observation[];
   save: SaveData;
   isDaily: boolean;
+  /** Bumped on every engine mutation so components re-render even when the engine
+   *  object reference itself (mutated in place, not replaced) doesn't change. */
+  frame: number;
 
   startCampaignLevel: (index: number) => void;
   startDaily: () => void;
@@ -79,6 +82,7 @@ export const useGameStore = create<StoreState>((set, get) => ({
   discoveryQueue: [],
   save: loadSave(),
   isDaily: false,
+  frame: 0,
 
   startCampaignLevel: (index) => {
     const level = CAMPAIGN_LEVELS[index];
@@ -129,7 +133,7 @@ export const useGameStore = create<StoreState>((set, get) => ({
 
     if (outcome === 'DEAD') {
       const deathInfo = timelineFromEngine(engine);
-      set({ moves: newMoves, observations, lastDeathInfo: deathInfo, phase: 'DEATH', attempts: get().attempts + 1 });
+      set({ moves: newMoves, observations, lastDeathInfo: deathInfo, phase: 'DEATH', attempts: get().attempts + 1, frame: get().frame + 1 });
       return;
     }
     if (outcome === 'GOAL') {
@@ -152,14 +156,14 @@ export const useGameStore = create<StoreState>((set, get) => ({
         };
       }
       writeSave(nextSave);
-      set({ moves: newMoves, observations, phase: 'RESULT', elapsedMs: timeMs, save: nextSave });
+      set({ moves: newMoves, observations, phase: 'RESULT', elapsedMs: timeMs, save: nextSave, frame: get().frame + 1 });
       return;
     }
     if (newlyConfirmed.length > 0) {
-      set({ moves: newMoves, observations, discoveryQueue: newlyConfirmed, phase: 'DISCOVERY' });
+      set({ moves: newMoves, observations, discoveryQueue: newlyConfirmed, phase: 'DISCOVERY', frame: get().frame + 1 });
       return;
     }
-    set({ moves: newMoves, observations });
+    set({ moves: newMoves, observations, frame: get().frame + 1 });
   },
 
   tick: (dtSeconds) => {
@@ -175,7 +179,7 @@ export const useGameStore = create<StoreState>((set, get) => ({
     const { engine } = get();
     if (!engine) return;
     engine.respawn();
-    set({ phase: 'PLAYING' });
+    set({ phase: 'PLAYING', frame: get().frame + 1 });
   },
 
   restartLevel: () => {

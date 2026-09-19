@@ -19,6 +19,7 @@ export function GameScreen() {
   const move = useGameStore((s) => s.move);
   const phase = useGameStore((s) => s.phase);
   const tick = useGameStore((s) => s.tick);
+  useGameStore((s) => s.frame); // subscribe so a move (engine mutated in place) still triggers a repaint
   const rafRef = useRef<number | undefined>(undefined);
   const lastRef = useRef<number>(performance.now());
 
