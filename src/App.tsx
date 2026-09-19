@@ -15,6 +15,7 @@ export default function App() {
     case 'DISCOVERY':
     case 'DEATH':
     case 'RESULT':
+    case 'REPLAY':
       return <GameScreen />;
     default:
       return <Menu />;

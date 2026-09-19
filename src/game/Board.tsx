@@ -2,15 +2,29 @@ import type { ReactElement } from 'react';
 import type { RuleEngine } from '../engine/ruleEngine';
 import type { GameObject } from '../engine/types';
 
+const TILE = 64;
+const GAP = 6;
+const PAD = 16;
+const ROBOT = 40;
+const ROBOT_OFFSET = (TILE - ROBOT) / 2;
+
 /** Renders the current world state. Pure presentational — no game logic here. */
-export function Board({ engine, onTileClick }: { engine: RuleEngine; onTileClick?: (x: number, y: number) => void }) {
+export function Board({
+  engine,
+  onTileClick,
+  robotEffect,
+}: {
+  engine: RuleEngine;
+  onTileClick?: (x: number, y: number) => void;
+  /** Transient visual flag driven by the caller watching recent engine events. */
+  robotEffect?: 'teleport' | 'death' | null;
+}) {
   const { level } = engine;
   const cells: ReactElement[] = [];
 
   for (let y = 0; y < level.height; y++) {
     for (let x = 0; x < level.width; x++) {
       const obj = engine.objects.find((o) => o.alive && o.pos.x === x && o.pos.y === y && o.kind !== 'PLAYER');
-      const isPlayer = engine.playerPos.x === x && engine.playerPos.y === y;
       const isExit = engine.exitPos.x === x && engine.exitPos.y === y;
 
       let content: ReactElement | null = null;
@@ -18,26 +32,6 @@ export function Board({ engine, onTileClick }: { engine: RuleEngine; onTileClick
         content = <div className={`exit-portal ${engine.exitHidden ? 'hidden' : ''}`} aria-label="exit" />;
       } else if (obj) {
         content = renderObject(obj);
-      }
-      if (isPlayer) {
-        content = (
-          <>
-            {content}
-            <div
-              className={`robot ${engine.outcome === 'DEAD' ? 'dead' : ''}`}
-              style={{ position: 'absolute' }}
-              role="img"
-              aria-label="robot"
-            >
-              <div className="body">
-                <div className="eyes">
-                  <span />
-                  <span />
-                </div>
-              </div>
-            </div>
-          </>
-        );
       }
 
       cells.push(
@@ -53,9 +47,36 @@ export function Board({ engine, onTileClick }: { engine: RuleEngine; onTileClick
     }
   }
 
+  const robotLeft = PAD + engine.playerPos.x * (TILE + GAP) + ROBOT_OFFSET;
+  const robotTop = PAD + engine.playerPos.y * (TILE + GAP) + ROBOT_OFFSET;
+  const robotClass = [
+    'robot',
+    engine.outcome === 'DEAD' ? 'dead' : '',
+    robotEffect === 'teleport' ? 'teleporting' : '',
+    robotEffect === 'death' ? 'shake' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
   return (
-    <div className="board" style={{ gridTemplateColumns: `repeat(${level.width}, 64px)` }}>
+    <div
+      className="board"
+      style={{ gridTemplateColumns: `repeat(${level.width}, ${TILE}px)`, position: 'relative' }}
+    >
       {cells}
+      <div
+        className={robotClass}
+        style={{ position: 'absolute', left: robotLeft, top: robotTop }}
+        role="img"
+        aria-label="robot"
+      >
+        <div className="body">
+          <div className="eyes">
+            <span />
+            <span />
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

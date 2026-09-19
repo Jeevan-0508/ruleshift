@@ -4,6 +4,8 @@ import { useGameStore } from '../engine/gameStore';
 export function DeathModal() {
   const lastDeathInfo = useGameStore((s) => s.lastDeathInfo);
   const respawn = useGameStore((s) => s.respawn);
+  const startReplay = useGameStore((s) => s.startReplay);
+  const moves = useGameStore((s) => s.moves);
   const [showTimeline, setShowTimeline] = useState(false);
 
   if (!lastDeathInfo) return null;
@@ -24,8 +26,11 @@ export function DeathModal() {
             ))}
           </div>
         )}
-        <div style={{ display: 'flex', gap: 10, marginTop: 16, justifyContent: 'center' }}>
+        <div style={{ display: 'flex', gap: 10, marginTop: 16, justifyContent: 'center', flexWrap: 'wrap' }}>
           <button className="btn primary" onClick={respawn}>TRY AGAIN</button>
+          {moves.length > 0 && (
+            <button className="btn ghost" onClick={startReplay}>WATCH REPLAY</button>
+          )}
           <button className="btn ghost" onClick={() => setShowTimeline((v) => !v)}>
             {showTimeline ? 'HIDE TIMELINE' : 'VIEW TIMELINE'}
           </button>

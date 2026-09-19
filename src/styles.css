@@ -193,6 +193,8 @@ button {
 .robot.dead .body { animation: none; background: linear-gradient(160deg, #5a2030, #2a1018); box-shadow: 0 0 18px var(--red); }
 .robot.teleporting .body { animation: teleport 0.4s ease; }
 @keyframes teleport { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.1; transform: scale(0.4) rotate(20deg); } 100% { opacity: 1; transform: scale(1); } }
+.robot.shake { animation: shake 0.4s ease; }
+@keyframes shake { 0%, 100% { transform: translate(0, 0); } 20% { transform: translate(-6px, 2px); } 40% { transform: translate(5px, -3px); } 60% { transform: translate(-4px, 3px); } 80% { transform: translate(4px, -2px); } }
 
 /* ---------- modals ---------- */
 .modal-backdrop {

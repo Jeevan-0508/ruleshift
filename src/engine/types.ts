@@ -115,7 +115,8 @@ export type GamePhase =
   | 'DISCOVERY'
   | 'SUCCESS'
   | 'DEATH'
-  | 'RESULT';
+  | 'RESULT'
+  | 'REPLAY';
 
 export interface Observation {
   id: string;

@@ -18,6 +18,7 @@ export function ResultModal() {
   const nextLevel = useGameStore((s) => s.nextLevel);
   const restartLevel = useGameStore((s) => s.restartLevel);
   const goToMenu = useGameStore((s) => s.goToMenu);
+  const startReplay = useGameStore((s) => s.startReplay);
 
   if (phase !== 'RESULT') return null;
 
@@ -38,6 +39,7 @@ export function ResultModal() {
         </div>
         <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
           <button className="btn primary" onClick={nextLevel}>NEXT LEVEL</button>
+          <button className="btn ghost" onClick={startReplay}>WATCH REPLAY</button>
           <button className="btn ghost" onClick={restartLevel}>TRY AGAIN</button>
           <button className="btn ghost" onClick={goToMenu}>MENU</button>
         </div>

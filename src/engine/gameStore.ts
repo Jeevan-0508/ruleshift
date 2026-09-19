@@ -6,6 +6,8 @@ import { loadSave, writeSave, type SaveData } from './save';
 import { dailySeed } from './seededRandom';
 import { generateLevel } from './levelGenerator';
 import { CAMPAIGN_LEVELS } from '../levels/handAuthored';
+import { playSound, type SoundKind } from './sound';
+import type { GameEventType } from './types';
 
 export interface DeathInfo {
   timeline: { t: number; label: string }[];
@@ -29,6 +31,11 @@ interface StoreState {
   /** Bumped on every engine mutation so components re-render even when the engine
    *  object reference itself (mutated in place, not replaced) doesn't change. */
   frame: number;
+  /** Phase to return to when a replay is closed (RESULT or DEATH). */
+  replayReturnPhase: GamePhase;
+  replayEngine: RuleEngine | null;
+  replayStepIndex: number;
+  replayDone: boolean;
 
   startCampaignLevel: (index: number) => void;
   startDaily: () => void;
@@ -42,6 +49,26 @@ interface StoreState {
   goToWorldSelect: () => void;
   setPhase: (phase: GamePhase) => void;
   toggleMute: () => void;
+  startReplay: () => void;
+  advanceReplay: () => void;
+  stopReplay: () => void;
+}
+
+const EVENT_SOUND: Partial<Record<GameEventType, SoundKind>> = {
+  MOVE: 'MOVE',
+  TOUCH: 'TOUCH',
+  RULE_TRIGGER: 'RULE_TRIGGER',
+  TELEPORT: 'TELEPORT',
+  DEATH: 'DEATH',
+  GOAL: 'GOAL',
+  GRAVITY_FLIP: 'RULE_TRIGGER',
+};
+
+function playEventSounds(events: readonly { type: GameEventType }[], muted: boolean): void {
+  for (const e of events) {
+    const kind = EVENT_SOUND[e.type];
+    if (kind) playSound(kind, muted);
+  }
 }
 
 function timelineFromEngine(engine: RuleEngine): DeathInfo {
@@ -83,6 +110,10 @@ export const useGameStore = create<StoreState>((set, get) => ({
   save: loadSave(),
   isDaily: false,
   frame: 0,
+  replayReturnPhase: 'RESULT',
+  replayEngine: null,
+  replayStepIndex: 0,
+  replayDone: false,
 
   startCampaignLevel: (index) => {
     const level = CAMPAIGN_LEVELS[index];
@@ -126,7 +157,10 @@ export const useGameStore = create<StoreState>((set, get) => ({
   move: (dir) => {
     const { engine, inference, moves } = get();
     if (!engine || get().phase !== 'PLAYING') return;
+    const eventsBefore = engine.log.all().length;
     const outcome = engine.move(dir);
+    const newEvents = engine.log.all().slice(eventsBefore);
+    playEventSounds(newEvents, get().save.muted);
     const newMoves = [...moves, dir];
     const newlyConfirmed = inference.ingest(engine.log.all());
     const observations = inference.all();
@@ -205,5 +239,38 @@ export const useGameStore = create<StoreState>((set, get) => ({
     const save = { ...get().save, muted: !get().save.muted };
     writeSave(save);
     set({ save });
+  },
+
+  startReplay: () => {
+    const { level, phase } = get();
+    if (!level) return;
+    set({
+      replayReturnPhase: phase === 'DEATH' ? 'DEATH' : 'RESULT',
+      replayEngine: new RuleEngine(level),
+      replayStepIndex: 0,
+      replayDone: false,
+      phase: 'REPLAY',
+      frame: get().frame + 1,
+    });
+  },
+
+  advanceReplay: () => {
+    const { replayEngine, replayStepIndex, moves, replayDone } = get();
+    if (!replayEngine || replayDone) return;
+    if (replayStepIndex >= moves.length) {
+      set({ replayDone: true });
+      return;
+    }
+    const eventsBefore = replayEngine.log.all().length;
+    const outcome = replayEngine.move(moves[replayStepIndex]);
+    const newEvents = replayEngine.log.all().slice(eventsBefore);
+    playEventSounds(newEvents, get().save.muted);
+    const nextIndex = replayStepIndex + 1;
+    const done = outcome === 'GOAL' || outcome === 'DEAD' || nextIndex >= moves.length;
+    set({ replayStepIndex: nextIndex, replayDone: done, frame: get().frame + 1 });
+  },
+
+  stopReplay: () => {
+    set({ phase: get().replayReturnPhase, replayEngine: null, replayStepIndex: 0, replayDone: false, frame: get().frame + 1 });
   },
 }));
