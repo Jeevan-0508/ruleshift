@@ -1,15 +1,23 @@
+<p align="center"><img src="assets/jk-brand-banner.png" alt="Jeevan Siddhabhaktula: Risk. Governance. AI." width="280"></p>
+
+<div align="center">
+
 # RULESHIFT
 
 **The world has rules. You just don't know them yet.**
 
-▶ **[Play it now](https://jeevan-0508.github.io/ruleshift/)**
-
 A small robot. A grid. An exit. Simple, until the blue orb you touched two
-moves ago quietly turns the red one lethal, or dying once flips which way is
-up. RULESHIFT is a puzzle game about figuring out rules nobody told you,
-built so that every surprise has a fair, discoverable explanation.
+moves ago quietly turns the red one lethal, or dying once flips which way is up.
 
-![RULESHIFT screenshot placeholder](docs/screenshot.png)
+[![Play It Now](https://img.shields.io/badge/Play%20It%20Now-jeevan--0508.github.io-38bdf8?style=for-the-badge)](https://jeevan-0508.github.io/ruleshift/)
+[![License](https://img.shields.io/badge/License-MIT-22c55e?style=for-the-badge)](LICENSE)
+[![Tests](https://img.shields.io/badge/Tests-27%2F27_passing-22c55e?style=for-the-badge)](src/tests)
+[![Stack](https://img.shields.io/badge/Stack-React%20%7C%20TypeScript%20%7C%20Zustand-818cf8?style=for-the-badge)](#architecture)
+
+</div>
+
+RULESHIFT is a puzzle game about figuring out rules nobody told you, built so
+that every surprise has a fair, discoverable explanation.
 
 ---
 
@@ -95,15 +103,47 @@ in-game **Watch Replay** feature and a correctness check
 
 ## Architecture
 
-```
-src/
-  engine/     seededRandom, ruleEngine, levelGenerator, validator,
-              inferenceEngine, replay, events, save, gameStore, types
-  game/       Board.tsx — pure presentational grid renderer
-  ui/         Menu, WorldSelect, HUD, ObservationsPanel,
-              DiscoveryModal, DeathModal, ResultModal, GameScreen
-  levels/     hand-authored campaign levels + world definitions
-  tests/      vitest suite for every engine module
+```mermaid
+flowchart TD
+    subgraph ENGINE["src/engine/  (zero React/DOM deps)"]
+        SR["seededRandom.ts"]
+        LG["levelGenerator.ts
+deterministic procedural generation"]
+        VA["validator.ts
+BFS: proves every level solvable"]
+        RU["ruleEngine.ts
+rule evaluation + interactions"]
+        IE["inferenceEngine.ts
+confirmation thresholds"]
+        RP["replay.ts"]
+        EV["events.ts"]
+        SV["save.ts
+corrupted-storage recovery"]
+        GS["gameStore.ts  (zustand)
+MENU -> PLAYING -> DISCOVERY/DEATH/RESULT -> next"]
+    end
+
+    subgraph GAME["src/game/"]
+        BD["Board.tsx
+pure presentational grid renderer"]
+    end
+
+    subgraph UI["src/ui/"]
+        M["Menu · WorldSelect · HUD · ObservationsPanel
+DiscoveryModal · DeathModal · ResultModal · GameScreen"]
+    end
+
+    LEVELS["src/levels/
+hand-authored campaign + world definitions"]
+
+    SR --> LG --> VA
+    LEVELS --> VA
+    RU --> IE
+    GS --> RU
+    GS --> RP
+    GS --> SV
+    GS --> EV
+    GS --> BD --> M
 ```
 
 The engine (`src/engine/`) has zero React or DOM dependencies — it's plain
